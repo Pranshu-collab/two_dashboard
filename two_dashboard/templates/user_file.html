@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Review Time</title>
+</head>
+<body>
+
+<h2>Submit Your Review</h2>
+
+<form id="reviewForm">
+    <label>Rating:</label>
+    <select name="rating" required>
+        <option value="">Select</option>
+        <option value="1"> (1)</option>
+        <option value="2"> (2)</option>
+        <option value="3"> (3)</option>
+        <option value="4"> (4)</option>
+        <option value="5"> (5)</option>
+    </select>
+
+    <br><br>
+
+    <label>Review:</label><br>
+    <textarea name="review" rows="5" required></textarea>
+
+    <br><br>
+    <button type="submit">Submit</button>
+</form>
+
+<br>
+<div id="msg" style="font-weight:bold; color:green;"></div>
+
+<script>
+document.getElementById("reviewForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+
+    const formData = new FormData(this);
+
+    fetch("/submit", {
+        method: "POST",
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        document.getElementById("msg").innerHTML = "Thank you! Your review was submitted.";
+        
+        // Clear form
+        document.getElementById("reviewForm").reset();
+    })
+    .catch(err => {
+        document.getElementById("msg").innerHTML = "Error submitting review.";
+    });
+});
+</script>
+
+</body>
+</html>
