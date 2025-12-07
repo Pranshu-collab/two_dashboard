@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, jsonify
 import json
 import os
+import google.generativeai as genai
 
 app = Flask(__name__)
 
@@ -33,7 +34,7 @@ def submit():
     with open("submissions.json","a") as f:
         f.write(json.dumps(submission) + "\n")
     return jsonify({
-        summary,action
+        "Success":True
     }),200
     #
     # extract rating + review
@@ -52,10 +53,39 @@ def data():
     return jsonify(submissions)
     # read submissions.json and return
 
-def call_AI(prompt):
+def call_AI(review_text):
     # call openai or gemini
-    pass
+    genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
+    prompt=f"""
+    You are a review i.e. customer feedback analyser. 
+    Input review: "{review_text}"
+    Return JSON only in this format:
+    {{
+        "summary": "a short summary",
+        "action":"suggested action to take to improve the customer feedback "
+    }} 
+    """
+    model=genai.GenerativeModel("gemini-2.0-flash")
+    response=model.generate_content(prompt)
+    try:
+        raw_text = response.text.strip()
+        if raw_text.startswith("```"):
+            raw_text = raw_text.split("```")[1]
+            if raw_text.startswith("json"):
+                raw_text = raw_text[4:]
+            raw_text = raw_text.strip()
+
+        ai_data = json.loads(raw_text)
+        summary=ai_data.get("summary")
+        action=ai_data.get("action")
+    except:
+        summary="Could not analyse review"
+        action=["Manual follow_up required"]
+    return summary,action
 
 if __name__ == "__main__":
     app.run(debug=True)
+    port=int(os.environ.get("PORT",8080))
+    app.run(host="0.0.0.0",port=port)
+
 
