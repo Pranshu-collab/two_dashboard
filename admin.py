@@ -6,7 +6,7 @@ app = Flask(__name__)
 
 @app.route("/")
 def user_dashboard():
-    return render_template("user.html")
+    return render_template("user_file.html")
 
 @app.route("/admin")
 def admin():
@@ -58,3 +58,4 @@ def call_AI(prompt):
 
 if __name__ == "__main__":
     app.run(debug=True)
+
