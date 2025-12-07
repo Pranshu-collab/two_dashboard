@@ -1,14 +1,96 @@
-<table id="submissionsTable">
-   <thead>
-      <tr>
-         <th>Rating</th>
-         <th>Review</th>
-         <th>AI Summary</th>
-         <th>Recommended Action</th>
-      </tr>
-   </thead>
-   <tbody id="tableBody"></tbody>
-</table>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background: #eef1f5;
+        }
+
+        .container {
+            width: 90%;
+            margin: auto;
+            margin-top: 30px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        th {
+            background: #3498db;
+            color: white;
+            padding: 12px;
+            text-align: left;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #ddd;
+            background: white;
+        }
+
+        tr:nth-child(even) td {
+            background: #f7f9fc;
+        }
+
+        tr:hover td {
+            background: #eaf3ff;
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Admin Dashboard</h1>
+
+    <div class="card">
+        <h2>All Submissions</h2>
+        <table id="submissionsTable">
+           <thead>
+              <tr>
+                 <th>Rating</th>
+                 <th>Review</th>
+                 <th>AI Summary</th>
+                 <th>Recommended Action</th>
+              </tr>
+           </thead>
+           <tbody id="tableBody"></tbody>
+        </table>
+    </div>
+
+    <div class="card">
+        <h2>Rating Distribution</h2>
+        <canvas id="ratingPie"></canvas>
+    </div>
+
+    <div class="card">
+        <h2>Count Per Rating</h2>
+        <canvas id="ratingBar"></canvas>
+    </div>
+
+</div>
 
 <script>
 async function loadSubmissions() {
@@ -17,6 +99,8 @@ async function loadSubmissions() {
       const data = await res.json();
 
       updateTable(data);
+      updateCharts(data);
+
    } catch (err) {
       console.error("Error loading submissions:", err);
    }
@@ -27,6 +111,10 @@ function updateTable(data){
    tableBody.innerHTML = "";
 
    data.forEach(item => {
+      const actionHTML = item.actions
+            ? item.actions.map(a => `<li>${a}</li>`).join("")
+            : "<li>No action</li>";
+
       const row = document.createElement("tr");
 
       row.innerHTML = `
@@ -39,6 +127,47 @@ function updateTable(data){
       tableBody.appendChild(row);
    });
 }
-setInterval(loadSubmissions, 3000)
+
+let pieChart, barChart;
+function updateCharts(data) {
+    const counts = [0,0,0,0,0];
+
+    data.forEach(item => {
+        const r = parseInt(item.rating);
+        if (r >= 1 && r <= 5) counts[r-1]++;
+    });
+
+    const pieCtx = document.getElementById("ratingPie").getContext("2d");
+    if (pieChart) pieChart.destroy();
+    pieChart = new Chart(pieCtx, {
+        type: 'pie',
+        data: {
+            labels: ["1 Star", "2 Stars", "3 Stars", "4 Stars", "5 Stars"],
+            datasets: [{
+                data: counts
+            }]
+        }
+    });
+
+    const barCtx = document.getElementById("ratingBar").getContext("2d");
+    if (barChart) barChart.destroy();
+    barChart = new Chart(barCtx, {
+        type: 'bar',
+        data: {
+            labels: ["1", "2", "3", "4", "5"],
+            datasets: [{
+                label: "Number of Reviews",
+                data: counts
+            }]
+        }
+    });
+}
+
+setInterval(loadSubmissions, 3000);
+loadSubmissions();
 </script>
+</body>
+</html>
+
+
 
